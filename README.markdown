@@ -5,8 +5,10 @@ LocalEval
 
 _instance\_eval without changing self_
 
-Using `local_eval` you can add arbitrary functionality to a block for
-the duration of that block. Unlike `instance_eval` the `self` of the
+Using `local_eval` you get most of the benefits of `instance_eval`
+with very few of the drawbacks: local instance variables are
+accessible within the block and method lookups are directed to the
+correct receiver. Unlike `instance_eval` the `self` of the
 block is not changed.
 
 LocalEval provides the `local_eval` and `local_eval_with` methods.
@@ -15,10 +17,11 @@ LocalEval provides the `local_eval` and `local_eval_with` methods.
 * Read the [documentation](http://rdoc.info/github/banister/local_eval/master/file/README.markdown)
 * See the [source code](http://github.com/banister/local_eval)
 
-example: gen_include()
+example: local_eval
 --------------------------
 
-Using `gen_include` we can include a class into another class:
+Using `local_eval` we can add the functionality of the receiver to the
+block:
 
 
     class C
@@ -27,14 +30,10 @@ Using `gen_include` we can include a class into another class:
       end
     end
 
-    class D
-      gen_include C
-    end
-
-    D.new.hello #=> :hello
-    D.ancestors #=> [D, C, Object, ...]
+    o = C.new
+    o.local_eval { hello } #=> :hello
     
-example: gen_extend()
+example: capture
 --------------------
 
 `gen_extend` lets us mix objects into objects:
