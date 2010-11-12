@@ -6,7 +6,7 @@ puts "Testing LocalEval version #{LocalEval::VERSION}..."
 puts "Ruby version #{RUBY_VERSION}"
 
 class Module
-  public :remove_const, :include
+  public :remove_const, :include, :remove_method
 end
 
 describe LocalEval do
@@ -14,13 +14,13 @@ describe LocalEval do
     O = Object.new
 
     class A
-      def a
+      def self.a
         :a
       end
     end
 
     class B
-      def b
+      def self.b
         :b
       end
     end
@@ -43,21 +43,25 @@ describe LocalEval do
     end
 
     class C
-      def hello
+      def self.build_proc
+        proc { love }
+      end
+      
+      def self.hello
         :c
       end
 
-      def c
+      def self.c
         :c
       end
 
-      def ivar(v)
+      def self.ivar(v)
         v
       end
     end
 
     module M
-      def hello
+      def self.hello
         :m
       end
 
@@ -81,6 +85,17 @@ describe LocalEval do
       O.local_eval { hello }.should == :o
       lambda { hello }.should.raise NameError
     end
+
+    it 'should not error when receiver is the same as block context' do
+      lambda { local_eval { :hello } }.should.not.raise ArgumentError
+      local_eval { :hello }.should == :hello
+    end
+
+    it 'should mix implicit self into context of block' do
+      def self.love; :love; end
+      local_eval(&C.build_proc).should == :love
+      self.singleton_class.remove_method(:love)
+    end
   end
 
   describe 'local_eval_with' do
@@ -90,6 +105,10 @@ describe LocalEval do
       lambda { local_eval_with(A, B) { a; b; } }.should.not.raise NameError
       lambda { a }.should.raise NameError
       lambda { b }.should.raise NameError
+    end
+
+    it 'should not error when mixing in multiple objects that include the context of the block' do
+      lambda { local_eval_with(self, A, B) { a; b } }.should.not.raise NameError
     end
   end
   
@@ -101,14 +120,13 @@ describe LocalEval do
     end
 
     it 'should mixin and mixout a class/module chain' do
-      C.include M
+      C.extend M
       lambda { c }.should.raise NameError
       lambda { m }.should.raise NameError
       C.local_eval { c.should == :c; m.should == :m }
       lambda { c }.should.raise NameError
       lambda { m }.should.raise NameError
     end
-
   end
 
   describe 'ivars in the block' do

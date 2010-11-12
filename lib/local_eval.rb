@@ -6,25 +6,25 @@ require 'object2module'
 
 module LocalEval
   module ObjectExtensions
-    LocalEvalMutex = Mutex.new
     def local_eval(*objs, &block)
       objs = Array(self) if objs.empty?
-      functionality = Module.new.gen_include(*objs)
       context = eval('self', block.binding)
-      val = nil
-      LocalEvalMutex.synchronize do
-        context.instance_eval { @__local_eval_mutex__ ||= Mutex.new }
-      end.synchronize do
-        begin
-          context.gen_extend(functionality)
-          context.instance_variable_set(__context_self_name__, self)
-          val = yield
-        ensure
-          context.unextend(functionality, true)
-          context.send(:remove_instance_variable, __context_self_name__)
-        end
+
+      # if the receiver is the same as the block context then don't
+      # mix in anything, as functionality is already present.
+      if objs.include?(context)
+        objs.delete(context)
       end
-      val
+        
+      return yield if objs.empty?
+
+      # add functionality to anonymous module to ease mixing and unmixing
+      functionality = Module.new.gen_include *objs.map { |o| o.is_a?(Module) ? o.singleton_class : o }
+      
+      context.temp_extend functionality,
+                          :before => proc { context.instance_variable_set(__context_self_name__, self) },
+                          :after => proc { context.send(:remove_instance_variable, __context_self_name__) },
+                          &block
     end
     alias_method :local_eval_with, :local_eval
 
