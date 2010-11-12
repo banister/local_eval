@@ -25,13 +25,15 @@ block:
 
 
     class C
-      def hello
-        :hello
+      def hello(name)
+        "hello #{name}!"
       end
     end
 
     o = C.new
-    o.local_eval { hello } #=> :hello
+
+    @name = "John"
+    o.local_eval { hello(@name) } #=> "hello John!"
     
 example: capture
 --------------------
