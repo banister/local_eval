@@ -43,7 +43,7 @@ namespace :ruby do
 end
 
 desc "build all platform gems at once"
-task :gem => [:rmgems, "ruby:gem"]
+task :gems => [:rmgems, "ruby:gem"]
 
 desc "remove all platform gems"
 task :rmgems => ["ruby:clobber_package"]
