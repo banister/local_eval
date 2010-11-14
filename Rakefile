@@ -5,9 +5,9 @@ require 'rake/clean'
 require 'rake/gempackagetask'
 require "#{direc}/lib/local_eval/version"
 
-
-CLEAN.include("ext/**/*.#{dlext}", "ext/**/*.log", "ext/**/*.o", "ext/**/*~", "ext/**/*#*", "ext/**/*.obj", "ext/**/*.def", "ext/**/*.pdb")
 CLOBBER.include("**/*.#{dlext}", "**/*~", "**/*#*", "**/*.log", "**/*.o")
+CLEAN.include("ext/**/*.#{dlext}", "ext/**/*.log", "ext/**/*.o",
+              "ext/**/*~", "ext/**/*#*", "ext/**/*.obj", "ext/**/*.def", "ext/**/*.pdb")
 
 def apply_spec_defaults(s)
   s.name = "local_eval"
@@ -18,12 +18,12 @@ def apply_spec_defaults(s)
   s.email = 'jrmair@gmail.com'
   s.description = s.summary
   s.require_path = 'lib'
-  s.add_dependency("remix",">=0.4.6")
+  s.add_dependency("remix",">=0.4.8")
   s.add_dependency("object2module",">=0.4.3")
   s.homepage = "http://banisterfiend.wordpress.com"
   s.has_rdoc = 'yard'
-  s.files = FileList["ext/**/extconf.rb", "ext/**/*.h", "ext/**/*.c", "lib/**/*.rb",
-                     "test/*.rb", "CHANGELOG", "README.markdown", "Rakefile"].to_a
+  s.files = Dir["ext/**/extconf.rb", "ext/**/*.h", "ext/**/*.c", "lib/**/*.rb",
+                     "test/*.rb", "CHANGELOG", "README.markdown", "Rakefile"]
 end
 
 task :test do
@@ -42,23 +42,6 @@ namespace :ruby do
   end
 end
 
-task :compile do
-  build_for = proc do |pik_ver, ver|
-    sh %{ \
-          pik #{pik_ver} && \
-          ruby extconf.rb && \
-          make clean && \
-          make && \
-          cp *.so #{direc}/lib/#{ver} \
-        }
-  end
-  
-  chdir("#{direc}/ext/remix") do
-    build_for.call("187", "1.8")
-    build_for.call("default", "1.9")
-  end
-end
-
 desc "build all platform gems at once"
 task :gem => [:rmgems, "ruby:gem"]
 
@@ -73,6 +56,3 @@ task :pushgems => :gems do
     end
   end
 end
-
-
-

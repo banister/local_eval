@@ -42,6 +42,9 @@ module LocalEval
     end
     alias_method :local_eval_with, :local_eval
 
+    # This form is meant to be called without a receiver
+    private :local_eval_with
+
     def capture(&block)
       
       # 1. Get name of enclosing method (method that invoked
