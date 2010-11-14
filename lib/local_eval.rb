@@ -38,28 +38,23 @@ module LocalEval
       functionality = Module.new.gen_include *objs.map { |o| o.is_a?(Module) ? o.singleton_class : o }
       
       # mix the anonymous module into the block context
-      context.temp_extend functionality,
-                          :before => proc { context.instance_variable_set(LocalEval.context_self_name, self) },
-                          :after => proc { context.send(:remove_instance_variable, LocalEval.context_self_name) },
-                          &block
+      context.temp_extend functionality, &block
     end
     alias_method :local_eval_with, :local_eval
 
     def capture(&block)
-      if instance_variable_defined?(LocalEval.context_self_name)
-
-        # 1. Get name of enclosing method (method that invoked
-        # `capture ` block)
-        # 2. Find owner of enclosing method
-        # 3. Owner is guaranteed to be a singleton class
-        # 4. Find associated object (attached object) of the singleton class
-        # 5. This object will be the receiver of the method call.
-        method_owner = method(eval('__method__', block.binding)).owner
-        attached_object = method_owner.__attached__
-        attached_object.instance_eval &block
-      else
-        yield
-      end
+      
+      # 1. Get name of enclosing method (method that invoked
+      # `capture ` block)
+      # 2. Find owner of enclosing method (owner is guaranteed to be
+      # a singleton class)
+      # 4. Find associated object (attached object) of the singleton class
+      # 5. This object will be the receiver of the method call, so
+      # instance_eval on it.
+      method_name = eval('__method__', block.binding)
+      method_owner = method(method_name).owner
+      attached_object = method_owner.__attached__
+      attached_object.instance_eval &block
     end
   end
 end

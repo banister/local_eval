@@ -1,82 +1,22 @@
 direc = File.dirname(__FILE__)
+
 require 'rubygems'
 require "#{direc}/../lib/local_eval"
+require "#{direc}/helper1"
 
 puts "Testing LocalEval version #{LocalEval::VERSION}..."
+puts "With Remix version #{Remix::VERSION} and Object2module version #{Object2module::VERSION}"
 puts "Ruby version #{RUBY_VERSION}"
-
-class Module
-  public :remove_const, :include, :remove_method
-end
 
 describe LocalEval do
   before do
-    O = Object.new
-
-    class A
-      def self.a
-        :a
-      end
-    end
-
-    class B
-      def self.b
-        :b
-      end
-    end
-    
-    class << O
-      def hello
-        :o
-      end
-
-      def ivar_set(var, val)
-        instance_variable_set(var, val)
-      end
-
-      def receiver_ivar_set
-        capture {
-          @receiver_ivar = :receiver
-        }
-      end
-      
-    end
-
-    class C
-      def self.build_proc
-        proc { love }
-      end
-      
-      def self.hello
-        :c
-      end
-
-      def self.c
-        :c
-      end
-
-      def self.ivar(v)
-        v
-      end
-    end
-
-    module M
-      def self.hello
-        :m
-      end
-
-      def m
-        :m
-      end
-    end
+    Reset.call
   end
 
   after do
-    Object.remove_const(:A)
-    Object.remove_const(:B)
-    Object.remove_const(:C)
-    Object.remove_const(:M)
-    Object.remove_const(:O)
+    [:A, :B, :C, :M, :O, :O2].each do |c|
+      Object.remove_const(c)
+    end
   end
   
   describe 'mixing in an object' do
@@ -160,8 +100,38 @@ describe LocalEval do
       instance_variable_defined?(:@receiver_ivar).should == false
       O.instance_variable_get(:@receiver_ivar).should == :receiver
     end
-  end
 
+    it 'should redirect methods to appropriate receivers' do
+      O.instance_variable_defined?(:@receiver_ivar2).should == false
+      O2.instance_variable_defined?(:@receiver_ivar2).should == false
+      instance_variable_defined?(:@receiver_ivar).should == false
+      instance_variable_defined?(:@receiver_ivar2).should == false
+      lambda { receiver_ivar_set; receiver_ivar_set2 }.should.raise NameError
+      local_eval_with(O, O2) { receiver_ivar_set; receiver_ivar_set2 }
+      instance_variable_defined?(:@receiver_ivar).should == false
+      instance_variable_defined?(:@receiver_ivar2).should == false
+      O.instance_variable_get(:@receiver_ivar).should == :receiver
+      O2.instance_variable_get(:@receiver_ivar2).should == :receiver2
+    end
+
+    it 'should not prevent method lookup on capture-methods on objects that are not involved in the local_eval' do
+      O2.instance_variable_defined?(:@receiver_ivar2).should == false
+      O.local_eval { O2.receiver_ivar_set2.should == :receiver2 }
+      O2.instance_variable_get(:@receiver_ivar2).should == :receiver2
+    end
+
+    it 'should work properly with nested local_evals' do
+      O.local_eval do
+        O2.local_eval { receiver_ivar_set2 }
+        lambda { receiver_ivar_set2 }.should.raise NameError
+        receiver_ivar_set
+      end
+
+      O2.instance_variable_get(:@receiver_ivar2).should == :receiver2
+      O.instance_variable_get(:@receiver_ivar).should == :receiver
+    end
+  end
+  
   describe 'mixing in a module' do
     it 'should mix in and mixout the module' do
       lambda { hello }.should.raise NameError
