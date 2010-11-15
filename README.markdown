@@ -38,32 +38,48 @@ block:
 example: capture
 --------------------
 
-`gen_extend` lets us mix objects into objects:
-
-    o = Object.new
-    class << o
-      def bye
-        :bye
+Since `local_eval` does not alter the `self` inside a block,
+all methods with an implied receiver will be invoked with respect to
+this self. This means that all mutator methods defined on the receiver
+will modify state on the block's self rather than on the receiver's
+self. This is unlikely to be the desired behaviour; and so
+using the `capture` method we can redirect the method lookup to
+the actual receiver. All code captured by the `capture` block
+will be `instance_eval`'d against the actual receiver of the method.
+     
+    class C
+      class << self
+        attr_reader :hello
+        def self.capture_test
+         
+          # this code will be run against C
+          capture { @hello = :captured }
+    
+          # this code will be run against the block context
+          @goodbye = :goobye
+        end
       end
     end
-
-    n = Object.new
-    n.gen_extend o
-    n.bye #=> :bye
     
+    C.local_eval { capture_test }
+
+    C.hello #=> :captured
+    @goodbye #=> :goodbye
+
 How it works
 --------------
 
-Object2module simply removes the check for `T_MODULE` from `rb_include_module()`
+Makes use of companion libraries: Remix and Object2module
 
 Companion Libraries
 --------------------
 
-Remix is one of a series of experimental libraries that mess with
+LocalEval is one of a series of experimental libraries that mess with
 the internals of Ruby to bring new and interesting functionality to
 the language, see also:
 
 * [Remix](http://github.com/banister/remix) - Makes ancestor chains read/write
+* [Object2module](http://github.com/banister/object2module) - Enables you to include/extend Object/Classes.
 * [Include Complete](http://github.com/banister/include_complete) - Brings in
   module singleton classes during an include. No more ugly ClassMethods and included() hook hacks.
 * [Prepend](http://github.com/banister/prepend) - Prepends modules in front of a class; so method lookup starts with the module

@@ -18,8 +18,8 @@ def apply_spec_defaults(s)
   s.email = 'jrmair@gmail.com'
   s.description = s.summary
   s.require_path = 'lib'
-  s.add_dependency("remix",">=0.4.8")
-  s.add_dependency("object2module",">=0.4.3")
+  s.add_dependency("remix",">=0.4.9")
+  s.add_dependency("object2module",">=0.4.5")
   s.homepage = "http://banisterfiend.wordpress.com"
   s.has_rdoc = 'yard'
   s.files = Dir["ext/**/extconf.rb", "ext/**/*.h", "ext/**/*.c", "lib/**/*.rb",

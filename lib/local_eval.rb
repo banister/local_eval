@@ -5,22 +5,12 @@ require 'remix'
 require 'object2module'
 
 module LocalEval
-  module ClassExtensions
-    
-    # Find the instance associated with the singleton class
-    # @return [Object] Instance associated with the singleton class
-    def __attached__
-      ObjectSpace.each_object(self).first
-    end
-  end
   
   module ObjectExtensions
 
     # A more general version of `local_eval`.
     # `local_eval_with` allows you to inject arbitrary functionality
-    # from any number of objects into the block. Methods that use a
-    # `capture` block are invoked on the object that defines the
-    # method (and not the local context).
+    # from any number of objects into the block. 
     # @param [Array] objs The objects to provide functionality to the block
     # @return The value of the block
     # @example
@@ -55,11 +45,9 @@ module LocalEval
     # Performs a `local_eval` on the block with respect to the
     # receiver.
     # `local_eval` has some advantages over `instance_eval` in that it
-    # does not change `self`. Instead, the functionality in the local
+    # does not change `self`. Instead, the functionality in the block
     # context is supplemented by the functionality in the
-    # receiver. Further, if receiver methods utilize a `capture` block
-    # then the receiver of that `local_eval` becomes the receiver of that
-    # method call (rather than the local context).
+    # receiver. 
     # @return The return value of the block
     # @yield The block to `local_eval`
     # @example local ivars can be looked up
@@ -90,7 +78,7 @@ module LocalEval
     # @yield The block to be evaluated in the receiver's context.
     # @example
     #   class C
-    #     attr_reader :hello
+    #     def self.hello() @hello end
     #     def self.capture_test
     #     
     #       # this code will be run against C
@@ -121,10 +109,6 @@ module LocalEval
     alias_method :__capture__, :capture
     
   end
-end
-
-class Class
-  include LocalEval::ClassExtensions
 end
 
 class Object

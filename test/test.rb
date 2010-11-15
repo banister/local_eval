@@ -77,9 +77,9 @@ describe LocalEval do
 
     it 'should make the method set a local ivar' do
       instance_variable_defined?(:@v).should == false
-      lambda { ivar_set }.should.raise NameError
-      O.local_eval { ivar_set(:@v, 10) }
-      lambda { ivar_set }.should.raise NameError
+      lambda { ivar_set1 }.should.raise NameError
+      O.local_eval { ivar_set1(:@v, 10) }
+      lambda { ivar_set1 }.should.raise NameError
       @v.should == 10
     end
       
@@ -138,6 +138,15 @@ describe LocalEval do
       O3.instance_variable_get(:@receiver_ivar3).should == :receiver3
       instance_variable_get(:@ivar3).should == :ivar3
       remove_instance_variable(:@ivar3)
+    end
+
+    it 'should work in an instance_eval' do
+      o = Object.new
+      o.instance_eval do
+        O3.local_eval { receiver_ivar_set3 }
+        O3.instance_variable_get(:@receiver_ivar3).should == :receiver3
+        instance_variable_get(:@ivar3).should == :ivar3
+      end
     end
   end
   

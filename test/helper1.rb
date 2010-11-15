@@ -23,7 +23,7 @@ Reset = proc do
       :o
     end
 
-    def ivar_set(var, val)
+    def ivar_set1(var, val)
       instance_variable_set(var, val)
     end
 
