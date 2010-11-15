@@ -14,7 +14,7 @@ describe LocalEval do
   end
 
   after do
-    [:A, :B, :C, :M, :O, :O2].each do |c|
+    [:A, :B, :C, :M, :O, :O2, :O3].each do |c|
       Object.remove_const(c)
     end
   end
@@ -129,6 +129,15 @@ describe LocalEval do
 
       O2.instance_variable_get(:@receiver_ivar2).should == :receiver2
       O.instance_variable_get(:@receiver_ivar).should == :receiver
+    end
+
+    it 'should separate the two different selves in a method when using capture' do
+      O3.instance_variable_defined?(:@receiver_ivar).should == false
+      instance_variable_defined?(:@ivar3).should == false
+      O3.local_eval { receiver_ivar_set3 }
+      O3.instance_variable_get(:@receiver_ivar3).should == :receiver3
+      instance_variable_get(:@ivar3).should == :ivar3
+      remove_instance_variable(:@ivar3)
     end
   end
   

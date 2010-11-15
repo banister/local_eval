@@ -5,7 +5,7 @@ end
 Reset = proc do 
   O = Object.new
   O2 = Object.new
-
+  O3 = Object.new
   class A
     def self.a
       :a
@@ -42,6 +42,16 @@ Reset = proc do
       }
     end
   end
+
+  class << O3
+    def receiver_ivar_set3
+      capture {
+        @receiver_ivar3 = :receiver3
+      }
+      @ivar3 = :ivar3
+    end
+  end
+
 
   class C
     def self.build_proc

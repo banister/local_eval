@@ -5,13 +5,6 @@ require 'remix'
 require 'object2module'
 
 module LocalEval
-
-  # Thread-local name for the hidden self used by `capture`
-  # @return [String] The name of the hidden self used by `capture`
-  def self.context_self_name
-    "@__self__#{Thread.current.object_id}"
-  end
-
   module ClassExtensions
     
     # Find the instance associated with the singleton class
@@ -23,7 +16,24 @@ module LocalEval
   
   module ObjectExtensions
 
-    def local_eval(*objs, &block)
+    # A more general version of `local_eval`.
+    # `local_eval_with` allows you to inject arbitrary functionality
+    # from any number of objects into the block. Methods that use a
+    # `capture` block are invoked on the object that defines the
+    # method (and not the local context).
+    # @param [Array] objs The objects to provide functionality to the block
+    # @return The value of the block
+    # @example
+    #   class A; def self.a; puts "a"; end; end
+    #   class B; def self.b; puts "b"; end; end
+    #   class C; def self.c; puts "c"; end; end
+    #   local_eval_with(A, B, C) { a; b; c }
+    #   #=> "a"
+    #   #=> "b"
+    #   #=> "c"
+    def local_eval_with(*objs, &block)
+      raise "need a block" if !block_given?
+      
       objs = Array(self) if objs.empty?
       context = eval('self', block.binding)
 
@@ -40,11 +50,60 @@ module LocalEval
       # mix the anonymous module into the block context
       context.temp_extend functionality, &block
     end
-    alias_method :local_eval_with, :local_eval
-
-    # This form is meant to be called without a receiver
     private :local_eval_with
 
+    # Performs a `local_eval` on the block with respect to the
+    # receiver.
+    # `local_eval` has some advantages over `instance_eval` in that it
+    # does not change `self`. Instead, the functionality in the local
+    # context is supplemented by the functionality in the
+    # receiver. Further, if receiver methods utilize a `capture` block
+    # then the receiver of that `local_eval` becomes the receiver of that
+    # method call (rather than the local context).
+    # @return The return value of the block
+    # @yield The block to `local_eval`
+    # @example local ivars can be looked up
+    #   class C
+    #     def hello(name)
+    #       "hello #{name}!"
+    #     end
+    #   end
+    #   
+    #   o = C.new
+    #   
+    #   @name = "John"
+    #   o.local_eval { hello(@name) } #=> "hello John!"
+    def local_eval(&block)
+      local_eval_with(&block)
+    end
+
+    # Since `local_eval` does not alter the `self` inside a block,
+    # all methods with an implied receiver will be invoked with respect to
+    # this self. This means that all mutator methods defined on the receiver
+    # will modify state on the block's self rather than on the receiver's
+    # self. This is unlikely to be the desired behaviour; and so
+    # using the `capture` method we can redirect the method lookup to
+    # the actual receiver. All code captured by the `capture` block
+    # will be `instance_eval`'d against the actual receiver of the
+    # method.
+    # @return The return value of the block.
+    # @yield The block to be evaluated in the receiver's context.
+    # @example
+    #   class C
+    #     attr_reader :hello
+    #     def self.capture_test
+    #     
+    #       # this code will be run against C
+    #       capture { @hello = :captured }
+    #
+    #       # this code will be run against the block context
+    #       @goodbye = :goobye
+    #     end
+    #   end
+    #
+    #   C.local_eval { capture_test }
+    #   C.hello #=> :captured
+    #   @goodbye #=> :goodbye
     def capture(&block)
       
       # 1. Get name of enclosing method (method that invoked
@@ -59,6 +118,8 @@ module LocalEval
       attached_object = method_owner.__attached__
       attached_object.instance_eval &block
     end
+    alias_method :__capture__, :capture
+    
   end
 end
 
