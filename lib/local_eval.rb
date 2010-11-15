@@ -40,7 +40,6 @@ module LocalEval
       # mix the anonymous module into the block context
       context.temp_extend functionality, &block
     end
-    private :local_eval_with
 
     # Performs a `local_eval` on the block with respect to the
     # receiver.
