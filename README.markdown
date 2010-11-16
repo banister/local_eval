@@ -40,10 +40,10 @@ example: capture
 
 Since `local_eval` does not alter the `self` inside a block,
 all methods with an implied receiver will be invoked with respect to
-this self. This means that all mutator methods defined on the receiver
+this local self. This means that all mutator methods defined on the receiver
 will modify state on the block's self rather than on the receiver's
 self. This is unlikely to be the desired behaviour; and so
-using the `capture` method we can redirect the method lookup to
+we can use the `capture` method  to redirect method lookup to
 the actual receiver. All code captured by the `capture` block
 will be `instance_eval`'d against the actual receiver of the method.
      
@@ -70,6 +70,11 @@ How it works
 --------------
 
 Makes use of companion libraries: Remix and Object2module
+
+Thread Safety
+--------------
+
+`local_eval` is not threadsafe.
 
 Companion Libraries
 --------------------

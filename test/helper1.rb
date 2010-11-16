@@ -6,6 +6,19 @@ Reset = proc do
   O = Object.new
   O2 = Object.new
   O3 = Object.new
+
+  class C1
+    def c1
+      :c1
+    end
+  end
+
+  class C2 < C1
+    def c2
+      :c2
+    end
+  end
+  
   class A
     def self.a
       :a

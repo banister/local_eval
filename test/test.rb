@@ -36,6 +36,25 @@ describe LocalEval do
       local_eval(&C.build_proc).should == :love
       self.singleton_class.remove_method(:love)
     end
+
+    it 'should not segfault when inspecting self inside a local_eval' do
+      O2.local_eval { self }.should.not == nil
+      O2.local_eval { self }.should.not == nil
+    end
+
+    it 'should mix in entire object inheritance chain, including singleton' do
+      c = C2.new
+      def c.sing
+        :sing
+      end
+
+      c.local_eval { c1.should == :c1; c2.should == :c2; sing.should == :sing }
+
+      lambda { c1 }.should.raise NameError
+      lambda { sing }.should.raise NameError
+      lambda { c2 }.should.raise NameError
+    end
+
   end
 
   describe 'local_eval_with' do
@@ -148,6 +167,9 @@ describe LocalEval do
         instance_variable_get(:@ivar3).should == :ivar3
       end
     end
+
+      
+    
   end
   
   describe 'mixing in a module' do

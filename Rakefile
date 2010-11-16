@@ -7,7 +7,8 @@ require "#{direc}/lib/local_eval/version"
 
 CLOBBER.include("**/*.#{dlext}", "**/*~", "**/*#*", "**/*.log", "**/*.o")
 CLEAN.include("ext/**/*.#{dlext}", "ext/**/*.log", "ext/**/*.o",
-              "ext/**/*~", "ext/**/*#*", "ext/**/*.obj", "ext/**/*.def", "ext/**/*.pdb")
+              "ext/**/*~", "ext/**/*#*", "ext/**/*.obj",
+              "ext/**/*.def", "ext/**/*.pdb", "**/*_flymake*.*", "**/*_flymake")
 
 def apply_spec_defaults(s)
   s.name = "local_eval"
@@ -19,7 +20,7 @@ def apply_spec_defaults(s)
   s.description = s.summary
   s.require_path = 'lib'
   s.add_dependency("remix",">=0.4.9")
-  s.add_dependency("object2module",">=0.4.5")
+  s.add_dependency("object2module",">=0.5.0")
   s.homepage = "http://banisterfiend.wordpress.com"
   s.has_rdoc = 'yard'
   s.files = Dir["ext/**/extconf.rb", "ext/**/*.h", "ext/**/*.c", "lib/**/*.rb",

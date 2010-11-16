@@ -16,11 +16,14 @@ end
 # C.hello
 # puts @goodbye
 
+k = C.singleton_class.singleton_class.singleton_class
+
 o = Object.new
 o.instance_eval {
-  C.local_eval { hello }
+  k.local_eval { puts self; puts self.singleton_class.ancestors }
   puts @goodbye
   puts C.instance_variable_get(:@hello)
-  #  puts @hello
-  puts self.object_id
 }
+
+V = Class.new
+puts V.ancestors
